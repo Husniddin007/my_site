@@ -1,1 +1,0 @@
-# Texnoman_uz
