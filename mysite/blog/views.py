@@ -1,13 +1,20 @@
 from django.core.paginator import Paginator,EmptyPage
 from django.core.mail import send_mail
+from django.contrib.postgres.search import (
+    SearchVector,
+    SearchQuery,
+    SearchRank
+    )
+from django.contrib.postgres.search import TrigramSimilarity
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 from django.http import Http404
 
 from .models import Post
 from taggit.models import Tag
-from .forms import EmailPostForm,CommentForm
+from .forms import EmailPostForm,CommentForm,SearchForm
 
 
 def post_list(request,tag_slug=None):
@@ -125,6 +132,35 @@ def post_comment(request,post_id):
             'post':post,
             'form':form,
             'commnet':commnet
+        }
+    )
+def post_search(request):
+    form = SearchForm()
+    query = None
+    results = []
+
+    if 'query' in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            # search_vector = SearchVector('title','body',config='spanish')
+            # search_query = SearchQuery(query,config='spanish')
+            results = (
+                Post.published.annotate(
+                    similarity=TrigramSimilarity('title', query),
+                    # search=search_vector,
+                    # rank = SearchRank(search_vector,search_query)
+                )
+                .filter(similarity__gt=0.1)
+                .order_by('-similarity')
+            )
+    return render(
+        request,
+        'blog/post/search.html',
+        {
+            'form':form,
+            'query':query,
+            'results':results
         }
     )
 

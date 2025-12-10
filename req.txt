@@ -1,0 +1,8 @@
+asgiref==3.11.0
+Django==6.0
+django-taggit==6.1.0
+Markdown==3.10
+psycopg==3.3.2
+python-decouple==3.8
+sqlparse==0.5.4
+typing_extensions==4.15.0
